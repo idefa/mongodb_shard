@@ -58,11 +58,11 @@ class ShardCollection(collection.Collection):
             new_filter={"_id":row["_id"]}
             return super().update_one(new_filter, update, upsert, bypass_document_validation, collation, array_filters, hint, session, let, comment)
 
-    def update_many(self, filter: Mapping[str, Any], update: Union[Mapping[str, Any], _Pipeline], upsert: bool = False, array_filters: Optional[Sequence[Mapping[str, Any]]] = None, bypass_document_validation: Optional[bool] = None, collation: Optional[_CollationIn] = None, hint: Optional[_IndexKeyHint] = None, session: Optional["ClientSession"] = None, let: Optional[Mapping[str, Any]] = None, comment: Optional[Any] = None) -> UpdateResult:
-        rows=self.find(filter,{'_id':1})
-        for row in rows:
-            new_filter={"_id":row["_id"]}
-            super().update_one(new_filter, update, upsert, bypass_document_validation, collation, array_filters, hint, session, let, comment)
+    def update_many(self, filter, update, upsert=False, array_filters=None, bypass_document_validation=False, collation=None, hint=None, session=None):
+        rows=list(self.find(self,{'_id':1}))
+        if rows is not None:
+            new_filter={"_id":{"$in":rows}}
+            return super().update_many(new_filter, update, upsert, array_filters, bypass_document_validation, collation, hint, session)
 
     def delete_one(self, filter: Mapping[str, Any], collation: Optional[_CollationIn] = None, hint: Optional[_IndexKeyHint] = None, session: Optional["ClientSession"] = None, let: Optional[Mapping[str, Any]] = None, comment: Optional[Any] = None) -> DeleteResult:
         row=self.find_one(filter,{'_id':1})
@@ -70,11 +70,11 @@ class ShardCollection(collection.Collection):
             new_filter={"_id":row["_id"]}
             return super().delete_one(new_filter, collation, hint, session, let, comment)
 
-    def delete_many(self, filter: Mapping[str, Any], collation: Optional[_CollationIn] = None, hint: Optional[_IndexKeyHint] = None, session: Optional["ClientSession"] = None, let: Optional[Mapping[str, Any]] = None, comment: Optional[Any] = None) -> DeleteResult:
-        rows=self.find(filter,{'_id':1})
-        for row in rows:
-            new_filter={"_id":row["_id"]}
-            super().delete_one(new_filter, collation, hint, session, let, comment)
+    def delete_many(self, filter, collation=None, hint=None, session=None):
+        rows=list(self.find(self,{'_id':1}))
+        if rows is not None:
+            new_filter={"_id":{"$in":rows}}
+            return super().delete_many(new_filter, collation, hint, session)
 
     def bulk_write(self, requests: Sequence[_WriteOp], ordered: bool = True, bypass_document_validation: bool = False, session: Optional["ClientSession"] = None, comment: Optional[Any] = None, let: Optional[Mapping] = None) -> BulkWriteResult:
         new_request=[]
